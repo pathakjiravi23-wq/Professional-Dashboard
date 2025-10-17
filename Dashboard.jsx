@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, useForm, router } from '@inertiajs/react';
+
 
 // --- Partials and Form Components ---
 import UpdateProfileInformationForm from '@/Pages/Profile/Partials/UpdateProfileInformationForm.jsx';
@@ -147,23 +148,24 @@ const PostInsightsContent = () => {
     );
 };
 
-const ManagePostsContent = () => {
-    const allPosts = [
-        { id: 1, title: 'Getting Started with React Hooks', category: 'Technology', status: 'Published', date: '2025-10-15', imageUrl: 'https://picsum.photos/seed/react/400/300' },
-        { id: 2, title: 'A Guide to Modern CSS', category: 'Technology', status: 'Published', date: '2025-10-12', imageUrl: 'https://picsum.photos/seed/css/400/300' },
-        { id: 3, title: 'Top 10 Travel Destinations for 2026', category: 'Travel', status: 'Draft', date: '2025-10-10', imageUrl: 'https://picsum.photos/seed/travel/400/300' },
-        { id: 4, title: 'The Future of Remote Work', category: 'Business', status: 'Published', date: '2025-10-08', imageUrl: 'https://picsum.photos/seed/work/400/300' },
-        { id: 5, title: 'Exploring the Wonders of the Cosmos', category: 'Science', status: 'Published', date: '2025-10-05', imageUrl: 'https://picsum.photos/seed/cosmos/400/300' },
-        { id: 6, title: 'Healthy Lifestyle Habits', category: 'Lifestyle', status: 'Draft', date: '2025-09-28', imageUrl: 'https://picsum.photos/seed/lifestyle/400/300' },
-    ];
+
+const ManagePostsContent = ({ posts }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const filteredPosts = allPosts.filter(post => post.title.toLowerCase().includes(searchTerm.toLowerCase()) || post.category.toLowerCase().includes(searchTerm.toLowerCase()));
-    const handleEdit = (id) => alert(`Editing post with ID: ${id}`);
-    const handleDelete = (id) => confirm(`Are you sure you want to delete post with ID: ${id}?`);
-    const StatusBadge = ({ status }) => {
-        const baseClasses = "px-2.5 py-0.5 text-xs font-semibold rounded-full";
-        if (status === 'Published') { return <span className={`${baseClasses} bg-green-100 text-green-800`}>Published</span>; }
-        return <span className={`${baseClasses} bg-gray-100 text-gray-800`}>Draft</span>;
+
+    // Filters the posts received from the backend based on the search term
+    const filteredPosts = posts.filter(post =>
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Handles the delete action
+    const handleDelete = (post) => {
+        if (confirm(`Are you sure you want to delete "${post.title}"?`)) {
+            // Sends a DELETE request to the server
+            router.delete(route('admin.posts.destroy', post.id), {
+                preserveScroll: true, // Prevents the page from scrolling to the top after deletion
+            });
+        }
     };
 
     return (
@@ -172,8 +174,16 @@ const ManagePostsContent = () => {
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <div className="p-4 border-b border-gray-200">
                     <div className="relative">
-                        <input type="text" placeholder="Search posts by title or category..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-5 w-5 text-gray-400" /></div>
+                        <input
+                            type="text"
+                            placeholder="Search posts by title or category..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-5 w-5 text-gray-400" />
+                        </div>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -183,7 +193,6 @@ const ManagePostsContent = () => {
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Post Title</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -191,58 +200,109 @@ const ManagePostsContent = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredPosts.map((post) => (
                                 <tr key={post.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap"><button onClick={() => window.open(post.imageUrl, '_blank')} className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md"><img className="h-10 w-16 object-cover rounded-md hover:opacity-80 transition-opacity" src={post.imageUrl} alt={post.title} /></button></td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{post.title}</div></td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-600">{post.category}</div></td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={post.status} /></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{post.date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><div className="flex items-center justify-end space-x-4"><button onClick={() => handleEdit(post.id)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Edit Post"><Edit className="h-5 w-5" /></button><button onClick={() => handleDelete(post.id)} className="text-red-600 hover:text-red-900 transition-colors" title="Delete Post"><Trash2 className="h-5 w-5" /></button></div></td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <img className="h-10 w-16 object-cover rounded-md" src={`/storage/${post.featured_image}`} alt={post.title} />
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{post.title}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-600">{post.category}</div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {new Date(post.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end space-x-4">
+                                            {/* Link to the dedicated edit page for the post */}
+                                            <Link href={route('admin.posts.edit', post.id)} className="text-indigo-600 hover:text-indigo-900 transition-colors" title="Edit Post">
+                                                <Edit className="h-5 w-5" />
+                                            </Link>
+                                            {/* Button to trigger the delete confirmation */}
+                                            <button onClick={() => handleDelete(post)} className="text-red-600 hover:text-red-900 transition-colors" title="Delete Post">
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                {filteredPosts.length === 0 && (<div className="text-center p-12"><p className="text-gray-500">No posts found for "{searchTerm}".</p></div>)}
+                {filteredPosts.length === 0 && (
+                    <div className="text-center p-12">
+                        <p className="text-gray-500">No posts found.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
+
+
 const ProfileContent = ({ mustVerifyEmail, status }) => (<div> <h2 className="text-2xl font-semibold text-gray-800 mb-6">Profile</h2> <div className="mx-auto max-w-7xl space-y-6"> <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8"> <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} className="max-w-xl" /> </div> <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8"> <UpdatePasswordForm className="max-w-xl" /> </div> <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8"> <DeleteUserForm className="max-w-xl" /> </div> </div> </div>);
 
+// In resources/js/Pages/Dashboard.jsx
+
 function AddPostContent() {
-    const [values, setValues] = useState({ title: '', content: '', category: '', image: null });
+    const { data, setData, post, processing, errors, reset } = useForm({
+        title: '',
+        content: '',
+        category: '',
+        featured_image: null,
+    });
+
+    // This part is correct and needs useState
     const [imagePreview, setImagePreview] = useState(null);
-    const [isSubmitted, setIsSubmitted] = useState(false);
+
     function handleChange(e) {
         const { id, value, type, files } = e.target;
         const inputValue = type === 'file' ? files?.[0] : value;
-        setValues(prevValues => ({ ...prevValues, [id]: inputValue }));
-        setIsSubmitted(false);
+        setData(id, inputValue);
+
         if (type === 'file' && files?.[0]) {
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result);
             reader.readAsDataURL(files[0]);
         }
     }
+
     function handleSubmit(e) {
         e.preventDefault();
-        console.log('Form data submitted:', values);
-        setIsSubmitted(true);
+        post(route('admin.posts.store'), {
+            onSuccess: () => {
+                reset();
+                setImagePreview(null);
+            },
+        });
     }
+
     return (
         <div>
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">Add New Post</h2>
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div className="p-6 text-gray-900 md:p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div><label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label><input type="text" id="title" name="title" value={values.title} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required placeholder="Enter your post title" /></div>
-                        <div><label htmlFor="content" className="block text-sm font-medium text-gray-700">Content</label><textarea id="content" name="content" rows="4" value={values.content} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required placeholder="Write your post content here..."></textarea></div>
-                        <div><label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label><select id="category" name="category" value={values.category} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required><option value="" disabled>Select a category</option><option value="technology">Technology</option><option value="lifestyle">Lifestyle</option><option value="business">Business</option><option value="science">Science</option><option value="travel">Travel</option></select></div>
-                        <div><label className="block text-sm font-medium text-gray-700">Featured Image</label><div className="mt-2 flex items-center space-x-6"><div className="shrink-0">{imagePreview ? (<img src={imagePreview} alt="Image preview" className="h-20 w-20 rounded-md object-cover" />) : (<div className="flex h-20 w-20 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>)}</div><label className="block"><span className="sr-only">Choose profile photo</span><input type="file" id="image" name="image" onChange={handleChange} className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100" accept="image/*" /></label></div></div>
-                        <div className="flex justify-end"><button type="submit" className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Upload Post</button></div>
+                        {/* 👇 THESE ARE THE CORRECTED LINES 👇 */}
+                        <div><label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label><input type="text" id="title" name="title" value={data.title} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required placeholder="Enter your post title" /></div>
+                        <div><label htmlFor="content" className="block text-sm font-medium text-gray-700">Content</label><textarea id="content" name="content" rows="4" value={data.content} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required placeholder="Write your post content here..."></textarea></div>
+                        <div><label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label><select id="category" name="category" value={data.category} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required><option value="" disabled>Select a category</option><option value="technology">Technology</option><option value="lifestyle">Lifestyle</option><option value="business">Business</option><option value="science">Science</option><option value="travel">Travel</option></select></div>
+
+                        <div><label className="block text-sm font-medium text-gray-700">Featured Image</label><div className="mt-2 flex items-center space-x-6"><div className="shrink-0">{imagePreview ? (<img src={imagePreview} alt="Image preview" className="h-20 w-20 rounded-md object-cover" />) : (<div className="flex h-20 w-20 items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400"><svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>)}</div><label className="block"><span className="sr-only">Choose profile photo</span>
+                            <input type="file" id="featured_image" name="featured_image" onChange={handleChange} className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100" accept="image/*" />
+                        </label></div></div>
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-400"
+                                disabled={processing}
+                            >
+                                {processing ? 'Uploading...' : 'Upload Post'}
+                            </button>
+                        </div>
                     </form>
-                    {isSubmitted && (<div className="mt-6 rounded-md bg-green-50 p-4"><div className="flex"><div className="flex-shrink-0"><svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg></div><div className="ml-3"><p className="text-sm font-medium text-green-800">Post submitted successfully! Check the browser console to see the data.</p></div></div></div>)}
+                    {/* Note: You also have an `isSubmitted` state variable here that is no longer defined. You can remove it since the main component now handles the success flash message. */}
                 </div>
             </div>
         </div>
@@ -263,8 +323,8 @@ const DashboardContent = ({ user, setActiveTab }) => {
     );
 };
 
-export default function AdminDashboard({ mustVerifyEmail, status }) {
-    const { auth } = usePage().props;
+export default function AdminDashboard({ mustVerifyEmail, status, posts }) {
+    const { auth, flash } = usePage().props;
     const user = auth.user;
     const [activeTab, setActiveTab] = useState('Dashboard');
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -272,7 +332,7 @@ export default function AdminDashboard({ mustVerifyEmail, status }) {
     const renderContent = () => {
         switch (activeTab) {
             case 'Add Post': return <AddPostContent />;
-            case 'Manage Posts': return <ManagePostsContent />;
+            case 'Manage Posts': return <ManagePostsContent posts={posts} />;
             case 'Post Insights': return <PostInsightsContent />;
             case 'Profile': return <ProfileContent mustVerifyEmail={mustVerifyEmail} status={status} />;
             case 'Dashboard': default: return <DashboardContent user={user} setActiveTab={setActiveTab} />;
@@ -289,7 +349,24 @@ export default function AdminDashboard({ mustVerifyEmail, status }) {
                     <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"><svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
                     <div className="flex flex-1 items-center justify-end space-x-4"><span className="text-sm font-medium text-gray-700">Welcome, {user.name || 'User'}!</span><Link href={route('home')} className="flex items-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-indigo-600 transition-colors" title="Homepage"><Home className="h-5 w-5" /></Link><Link href={route('logout')} method="post" as="button" className="flex items-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-indigo-600 transition-colors" title="Log Out"><LogOut className="h-5 w-5" /></Link></div>
                 </header>
-                <main className="flex-1 overflow-y-auto p-6 lg:p-10">{renderContent()}</main>
+                <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+                    {/* 👇 Add this notification logic */}
+                    {flash?.success && (
+                        <div className="mb-4 rounded-md bg-green-50 p-4 shadow">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm font-medium text-green-800">{flash.success}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {renderContent()}
+                </main>
             </div>
         </div>
     );
